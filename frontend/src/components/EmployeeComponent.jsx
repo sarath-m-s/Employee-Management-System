@@ -1,105 +1,124 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   createEmployee,
-  getEmployeeById as getEmployee,
+  getEmployeeById,
   updateEmployee,
-} from "../services/EmployeeService.js";
+} from "../services/EmployeeService";
 import { useNavigate, useParams } from "react-router-dom";
+import { getAllDepartments } from "../services/DepartmentService";
 
 const EmployeeComponent = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [departments, setDepartments] = useState([]);
+
+  useEffect(() => {
+    getAllDepartments()
+      .then((response) => {
+        setDepartments(response.data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
 
   const { id } = useParams();
-
   const [errors, setErrors] = useState({
     firstName: "",
     lastName: "",
     email: "",
+    department: "",
   });
 
-  const navigate = useNavigate();
+  const navigator = useNavigate();
 
   useEffect(() => {
     if (id) {
-      getEmployee(id)
+      getEmployeeById(id)
         .then((response) => {
           setFirstName(response.data.firstName);
           setLastName(response.data.lastName);
           setEmail(response.data.email);
+          setDepartmentId(response.data.departmentId);
         })
         .catch((error) => {
-          console.error("There was an error!", error);
+          console.error(error);
         });
     }
   }, [id]);
 
-  const handleFirstName = (event) => setFirstName(event.target.value);
-
-  const handleLastName = (event) => setLastName(event.target.value);
-
-  const handleEmail = (event) => setEmail(event.target.value);
-
-  const saveOrUpdateEmployee = (event) => {
-    event.preventDefault();
+  function saveOrUpdateEmployee(e) {
+    e.preventDefault();
 
     if (validateForm()) {
-      const employee = { firstName, lastName, email };
-      console.log("Employee => " + JSON.stringify(employee));
+      const employee = { firstName, lastName, email, departmentId };
+      console.log(employee);
 
       if (id) {
-        employee.id = id;
         updateEmployee(id, employee)
           .then((response) => {
-            console.log("Employee updated successfully", response.data);
-            navigate("/employees");
+            console.log(response.data);
+            navigator("/employees");
           })
           .catch((error) => {
-            console.error("There was an error updating the employee!", error);
+            console.error(error);
           });
       } else {
         createEmployee(employee)
           .then((response) => {
-            console.log("Employee added successfully", response.data);
-            navigate("/employees");
+            console.log(response.data);
+            navigator("/employees");
           })
           .catch((error) => {
-            console.error("There was an error adding the employee!", error);
+            console.error(error);
           });
       }
     }
-  }; // <-- Closing brace added here
+  }
 
   function validateForm() {
     let valid = true;
+
     const errorsCopy = { ...errors };
-    if (firstName.length === 0) {
-      errorsCopy.firstName = "First Name is required";
-      valid = false;
-    } else {
+
+    if (firstName.trim()) {
       errorsCopy.firstName = "";
-    }
-    if (lastName.length === 0) {
-      errorsCopy.lastName = "Last Name is required";
-      valid = false;
     } else {
-      errorsCopy.lastName = "";
+      errorsCopy.firstName = "First name is required";
+      valid = false;
     }
-    if (email.length === 0) {
+
+    if (lastName.trim()) {
+      errorsCopy.lastName = "";
+    } else {
+      errorsCopy.lastName = "Last name is required";
+      valid = false;
+    }
+
+    if (email.trim()) {
+      errorsCopy.email = "";
+    } else {
       errorsCopy.email = "Email is required";
       valid = false;
-    } else {
-      errorsCopy.email = "";
     }
+
+    if (departmentId) {
+      errorsCopy.department = "";
+    } else {
+      errorsCopy.department = "Select Department";
+      valid = false;
+    }
+
     setErrors(errorsCopy);
+
     return valid;
   }
 
   function pageTitle() {
     if (id) {
-      return <h2 className="text-center">Edit Employee</h2>;
+      return <h2 className="text-center">Update Employee</h2>;
     } else {
       return <h2 className="text-center">Add Employee</h2>;
     }
@@ -123,12 +142,13 @@ const EmployeeComponent = () => {
                   className={`form-control ${
                     errors.firstName ? "is-invalid" : ""
                   }`}
-                  onChange={handleFirstName}
-                />
+                  onChange={(e) => setFirstName(e.target.value)}
+                ></input>
                 {errors.firstName && (
-                  <div className="invalid-feedback">{errors.firstName} </div>
+                  <div className="invalid-feedback"> {errors.firstName} </div>
                 )}
               </div>
+
               <div className="form-group mb-2">
                 <label className="form-label">Last Name:</label>
                 <input
@@ -139,27 +159,53 @@ const EmployeeComponent = () => {
                   className={`form-control ${
                     errors.lastName ? "is-invalid" : ""
                   }`}
-                  onChange={handleLastName}
-                />
+                  onChange={(e) => setLastName(e.target.value)}
+                ></input>
                 {errors.lastName && (
-                  <div className="invalid-feedback">{errors.lastName} </div>
+                  <div className="invalid-feedback"> {errors.lastName} </div>
                 )}
               </div>
+
               <div className="form-group mb-2">
-                <label className="form-label">Email ID:</label>
+                <label className="form-label">Email:</label>
                 <input
                   type="text"
-                  placeholder="Enter Employee Email ID"
+                  placeholder="Enter Employee Email"
                   name="email"
                   value={email}
                   className={`form-control ${errors.email ? "is-invalid" : ""}`}
-                  onChange={handleEmail}
-                />
+                  onChange={(e) => setEmail(e.target.value)}
+                ></input>
                 {errors.email && (
-                  <div className="invalid-feedback">{errors.email} </div>
+                  <div className="invalid-feedback"> {errors.email} </div>
                 )}
               </div>
-              <button className="btn btn-success" onClick={saveOrUpdateEmployee}>
+
+              <div className="form-group mb-2">
+                <label className="form-label">Select Department:</label>
+                <select
+                  className={`form-control ${
+                    errors.department ? "is-invalid" : ""
+                  }`}
+                  value={departmentId}
+                  onChange={(e) => setDepartmentId(e.target.value)}
+                >
+                  <option value="Select Department">Select Department</option>
+                  {departments.map((department) => (
+                    <option key={department.id} value={department.id}>
+                      {" "}
+                      {department.departmentName}
+                    </option>
+                  ))}
+                </select>
+                {errors.department && (
+                  <div className="invalid-feedback"> {errors.department} </div>
+                )}
+              </div>
+              <button
+                className="btn btn-success"
+                onClick={saveOrUpdateEmployee}
+              >
                 Submit
               </button>
             </form>
