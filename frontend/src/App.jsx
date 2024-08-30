@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import EmployeeComponent from "./components/EmployeeComponent";
 import ListDepartmentComponent from "./components/ListDepartmentComponent";
 import DepartmentComponent from "./components/DepartmentComponent";
+import ChatAI from "./components/ChatAI";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <BrowserRouter>
         <HeaderComponent />
         <Routes>
+          <Route path="/chat-ai" element={<ChatAI />}></Route>
           <Route path="/" element={<ListEmployeeComponent />}></Route>
           <Route path="/employees" element={<ListEmployeeComponent />}></Route>
           <Route path="/add-employee" element={<EmployeeComponent />}></Route>
