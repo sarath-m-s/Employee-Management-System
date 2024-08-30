@@ -1,8 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { listEmployees } from "../services/EmployeeService";
-import { parse } from "json2csv";
+import { jsonToCSV } from "../services/utils";
 
 const ChatAI = () => {
+  const [csv, setCsv] = useState("");
+
   useEffect(() => {
     getAllEmployees();
   }, []);
@@ -13,14 +15,20 @@ const ChatAI = () => {
         const employees = response.data;
         console.log(response.data);
 
-        const csv = parse(employees);
-        console.log(csv);
+        const csvData = jsonToCSV(employees);
+        console.log(csvData);
+        setCsv(csvData);
       })
       .catch((error) => {
         console.error(error);
       });
   }
-  return <div></div>;
+
+  return (
+    <div>
+      <p>{csv}</p>
+    </div>
+  );
 };
 
 export default ChatAI;
